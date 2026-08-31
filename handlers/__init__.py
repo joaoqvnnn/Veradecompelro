@@ -8,6 +8,7 @@ from handlers.client.profile import router as profile_router
 from handlers.client.affiliates import router as affiliates_router
 from handlers.client.extras import router as extras_router
 from handlers.client.alerts import router as alerts_router
+from handlers.client.search import router as search_router
 from handlers.admin import setup_admin_routers
 
 
@@ -23,6 +24,7 @@ def setup_routers() -> Router:
     root.include_router(affiliates_router)
     root.include_router(extras_router)
     root.include_router(alerts_router)
+    root.include_router(search_router)
 
     # Admin
     root.include_router(setup_admin_routers())
