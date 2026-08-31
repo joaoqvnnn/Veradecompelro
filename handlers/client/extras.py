@@ -38,7 +38,6 @@ async def process_gift(message: Message, state: FSMContext, session: AsyncSessio
 
     try:
         value = await GiftCardService.redeem(session, db_user.id, code)
-        # Recarrega o usuário para pegar saldo atualizado
         await session.refresh(db_user)
         await message.answer(
             f"✅ <b>Gift Card resgatado com sucesso!</b>\n\n"
@@ -84,17 +83,6 @@ async def cb_about(callback: CallbackQuery):
         f"🛡 Entrega 100% automática\n"
         f"💳 Pagamento via PIX instantâneo\n\n"
         f"Use /termos para ver os termos de uso."
-    )
-    await callback.message.edit_text(text, reply_markup=back_kb(), parse_mode="HTML")
-    await callback.answer()
-
-
-@router.callback_query(F.data == "search")
-async def cb_search(callback: CallbackQuery):
-    text = (
-        "🔎 <b>Pesquisar Serviço</b>\n\n"
-        "Digite o nome do serviço que procura.\n"
-        "(Funcionalidade em expansão)"
     )
     await callback.message.edit_text(text, reply_markup=back_kb(), parse_mode="HTML")
     await callback.answer()
