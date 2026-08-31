@@ -6,9 +6,6 @@ logger = logging.getLogger(__name__)
 
 
 async def notify_user_payment_approved(bot: Bot, payment: Payment) -> None:
-    """
-    Envia mensagem ao usuário quando o PIX é aprovado.
-    """
     try:
         text = (
             f"✅ <b>PAGAMENTO APROVADO!</b>\n\n"
