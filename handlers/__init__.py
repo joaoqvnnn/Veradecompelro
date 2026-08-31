@@ -14,6 +14,7 @@ from handlers.admin import setup_admin_routers
 def setup_routers() -> Router:
     root = Router()
 
+    # Cliente
     root.include_router(start_router)
     root.include_router(catalog_router)
     root.include_router(purchase_router)
@@ -23,6 +24,7 @@ def setup_routers() -> Router:
     root.include_router(extras_router)
     root.include_router(alerts_router)
 
+    # Admin
     root.include_router(setup_admin_routers())
 
     return root
