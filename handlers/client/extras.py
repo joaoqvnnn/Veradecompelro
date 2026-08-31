@@ -38,6 +38,8 @@ async def process_gift(message: Message, state: FSMContext, session: AsyncSessio
 
     try:
         value = await GiftCardService.redeem(session, db_user.id, code)
+        # Recarrega o usuário para pegar saldo atualizado
+        await session.refresh(db_user)
         await message.answer(
             f"✅ <b>Gift Card resgatado com sucesso!</b>\n\n"
             f"💰 Valor adicionado: <b>R$ {value:.2f}</b>\n"
@@ -82,18 +84,6 @@ async def cb_about(callback: CallbackQuery):
         f"🛡 Entrega 100% automática\n"
         f"💳 Pagamento via PIX instantâneo\n\n"
         f"Use /termos para ver os termos de uso."
-    )
-    await callback.message.edit_text(text, reply_markup=back_kb(), parse_mode="HTML")
-    await callback.answer()
-
-
-@router.callback_query(F.data == "alerts")
-async def cb_alerts(callback: CallbackQuery):
-    # Implementação simplificada — pode expandir depois
-    text = (
-        "📢 <b>Sistema de Alertas</b>\n\n"
-        "Seja notificado quando seu serviço favorito for abastecido.\n\n"
-        "Em breve você poderá escolher os produtos aqui."
     )
     await callback.message.edit_text(text, reply_markup=back_kb(), parse_mode="HTML")
     await callback.answer()
