@@ -8,6 +8,7 @@ from bot import create_bot, create_dispatcher
 from config import settings
 from database.session import init_db, close_db
 from webhook import start_webhook_server, set_bot
+from tasks import start_background_tasks, stop_background_tasks
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO),
@@ -34,17 +35,19 @@ async def on_startup(bot):
     await init_db()
     await set_commands(bot)
 
-    # Injeta o bot no webhook para poder notificar usuários
+    # Webhook Mercado Pago
     set_bot(bot)
-
-    # Inicia servidor de webhook
     await start_webhook_server()
+
+    # Tasks em background (expiração de PIX, limpeza, etc.)
+    await start_background_tasks()
 
     logger.info(f"Bot @{settings.BOT_USERNAME} iniciado com sucesso!")
 
 
 async def on_shutdown(bot):
-    logger.info("Encerrando conexões...")
+    logger.info("Encerrando...")
+    await stop_background_tasks()
     await close_db()
     await bot.session.close()
     logger.info("Bot finalizado.")
@@ -59,7 +62,7 @@ async def main():
 
     await bot.delete_webhook(drop_pending_updates=True)
 
-    logger.info("Iniciando polling + webhook server...")
+    logger.info("Iniciando polling + webhook + tasks...")
     await dp.start_polling(bot)
 
 
