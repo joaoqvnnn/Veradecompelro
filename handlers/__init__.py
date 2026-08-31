@@ -7,13 +7,13 @@ from handlers.client.wallet import router as wallet_router
 from handlers.client.profile import router as profile_router
 from handlers.client.affiliates import router as affiliates_router
 from handlers.client.extras import router as extras_router
+from handlers.client.alerts import router as alerts_router
 from handlers.admin import setup_admin_routers
 
 
 def setup_routers() -> Router:
     root = Router()
 
-    # Cliente
     root.include_router(start_router)
     root.include_router(catalog_router)
     root.include_router(purchase_router)
@@ -21,8 +21,8 @@ def setup_routers() -> Router:
     root.include_router(profile_router)
     root.include_router(affiliates_router)
     root.include_router(extras_router)
+    root.include_router(alerts_router)
 
-    # Admin
     root.include_router(setup_admin_routers())
 
     return root
