@@ -8,7 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import User, Product
 from keyboards.admin import admin_stock_kb, admin_back_kb
 from services.stock import StockService
+from services.alerts import AlertService
 from handlers.admin.panel import is_admin
+from config import settings
 
 router = Router(name="admin_stock")
 
@@ -43,6 +45,7 @@ async def cb_stock_supply(callback: CallbackQuery, state: FSMContext, session: A
 
     from aiogram.utils.keyboard import InlineKeyboardBuilder
     from aiogram.types import InlineKeyboardButton
+
     builder = InlineKeyboardBuilder()
     for p in products:
         builder.row(
@@ -103,8 +106,23 @@ async def process_stock(message: Message, state: FSMContext, session: AsyncSessi
     try:
         added = await StockService.add_stock(session, product_id, lines)
         await state.clear()
+
+        # Notifica usuários com alerta ativo
+        notified = 0
+        try:
+            bot = message.bot
+            notified = await AlertService.notify_restock(
+                session=session,
+                bot=bot,
+                product_id=product_id,
+                added_quantity=added,
+            )
+        except Exception:
+            pass
+
+        extra = f"\n🔔 {notified} usuário(s) notificado(s)." if notified else ""
         await message.answer(
-            f"✅ <b>{added}</b> unidades adicionadas ao produto #{product_id}!",
+            f"✅ <b>{added}</b> unidades adicionadas ao produto #{product_id}!{extra}",
             reply_markup=admin_stock_kb(),
             parse_mode="HTML"
         )
@@ -123,11 +141,15 @@ async def cb_stock_view(callback: CallbackQuery, session: AsyncSession, db_user:
 
     lines = ["📦 <b>ESTOQUE ATUAL</b>\n"]
     for p in products:
-        emoji = "⚠️" if p.stock_count <= 5 else "✅"
+        emoji = "⚠️" if p.stock_count <= settings.LOW_STOCK_THRESHOLD else "✅"
         lines.append(f"{emoji} #{p.id} {p.name}: <b>{p.stock_count}</b>")
 
     text = "\n".join(lines) if products else "Nenhum produto."
-    await callback.message.edit_text(text, reply_markup=admin_back_kb("admin:stock"), parse_mode="HTML")
+    await callback.message.edit_text(
+        text,
+        reply_markup=admin_back_kb("admin:stock"),
+        parse_mode="HTML"
+    )
     await callback.answer()
 
 
@@ -137,7 +159,6 @@ async def cb_stock_low(callback: CallbackQuery, session: AsyncSession, db_user: 
         await callback.answer("Acesso negado.", show_alert=True)
         return
 
-    from config import settings
     result = await session.execute(
         select(Product).where(Product.stock_count <= settings.LOW_STOCK_THRESHOLD)
     )
@@ -151,5 +172,9 @@ async def cb_stock_low(callback: CallbackQuery, session: AsyncSession, db_user: 
             lines.append(f"🔴 #{p.id} {p.name}: <b>{p.stock_count}</b>")
         text = "\n".join(lines)
 
-    await callback.message.edit_text(text, reply_markup=admin_back_kb("admin:stock"), parse_mode="HTML")
+    await callback.message.edit_text(
+        text,
+        reply_markup=admin_back_kb("admin:stock"),
+        parse_mode="HTML"
+    )
     await callback.answer()
