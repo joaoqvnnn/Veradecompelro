@@ -5,17 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database.models import SystemSetting
 
 
-# Valores padrão (usados se não existir no banco)
 DEFAULTS: Dict[str, Any] = {
-    # Gerais
     "store_name": "Larizinha Store",
     "support_link": "https://t.me/suporte",
     "logs_chat_id": "",
     "separator": "===",
     "maintenance_mode": "false",
     "registration_bonus": "0.00",
-
-    # PIX
     "mp_access_token": "",
     "pix_min": "1.00",
     "pix_max": "150.00",
@@ -24,14 +20,10 @@ DEFAULTS: Dict[str, Any] = {
     "bonus_min_value": "0.00",
     "pix_manual_enabled": "false",
     "pix_auto_enabled": "true",
-
-    # Afiliados (pontos)
     "affiliate_enabled": "true",
     "points_per_recharge": "1",
     "points_min_convert": "500",
     "points_multiplier": "0.01",
-
-    # Outros
     "bot_username": "",
 }
 
@@ -45,7 +37,7 @@ class SettingsService:
             select(SystemSetting).where(SystemSetting.key == key)
         )
         row = result.scalar_one_or_none()
-        if row:
+        if row is not None:
             return row.value
         if default is not None:
             return str(default)
@@ -103,15 +95,7 @@ class SettingsService:
         return row
 
     @staticmethod
-    async def get_many(session: AsyncSession, keys: list[str]) -> Dict[str, str]:
-        out = {}
-        for key in keys:
-            out[key] = await SettingsService.get(session, key)
-        return out
-
-    @staticmethod
     async def ensure_defaults(session: AsyncSession) -> None:
-        """Cria no banco as keys que ainda não existem."""
         for key, value in DEFAULTS.items():
             result = await session.execute(
                 select(SystemSetting).where(SystemSetting.key == key)
